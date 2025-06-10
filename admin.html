@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda Electrónica</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .product-card img {{
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
+    }}
+    .admin-panel {{
+      display: none;
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background: #f8f9fa;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 1000;
+      width: 300px;
+    }}
+  </style>
+</head>
+<body>
+  <div class="container mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1>Tienda Electrónica</h1>
+      <div>
+        <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+        <button class="btn btn-outline-success d-none" id="adminBtn" onclick="toggleAdminPanel()">Admin</button>
+      </div>
+    </div>
+    <div class="row" id="productContainer"></div>
+  </div>
+
+  <!-- Modal Login -->
+  <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content p-3">
+        <h5>Usuario</h5>
+        <input id="username" class="form-control mb-2" placeholder="Usuario">
+        <input id="password" type="password" class="form-control mb-2" placeholder="Contraseña">
+        <select id="userType" class="form-control mb-2">
+          <option value="retail">Cliente Minorista</option>
+          <option value="wholesale">Cliente Mayorista</option>
+          <option value="admin">Administrador</option>
+        </select>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-primary" onclick="login()">Login</button>
+          <button class="btn btn-secondary" onclick="register()">Registrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Admin -->
+  <div class="admin-panel" id="adminPanel">
+    <h5>Nuevo Producto</h5>
+    <input id="newName" class="form-control mb-2" placeholder="Nombre">
+    <input id="newPriceRetail" type="number" class="form-control mb-2" placeholder="Precio Minorista">
+    <input id="newPriceWholesale" type="number" class="form-control mb-2" placeholder="Precio Mayorista">
+    <input id="newImage" class="form-control mb-2" placeholder="Ruta Imagen">
+    <button class="btn btn-success w-100" onclick="addProduct()">Agregar</button>
+  </div>
+
+  <script>
+    let products = [];
+    let currentUserType = "retail";
+
+    function renderProducts() {{
+      const container = document.getElementById("productContainer");
+      container.innerHTML = "";
+      products.forEach((p, i) => {{
+        const price = currentUserType === "wholesale" ? p.price_wholesale : p.price_retail;
+        const card = `
+          <div class="col-md-4 mb-3">
+            <div class="product-card border p-2 rounded">
+              <img src="${{p.image}}" alt="${{p.name}}">
+              <h5>${{p.name}}</h5>
+              <p><strong>$${{price}}</strong></p>
+            </div>
+          </div>`;
+        container.innerHTML += card;
+      }});
+    }}
+
+    function register() {{
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const type = document.getElementById("userType").value;
+      localStorage.setItem("user_" + user, JSON.stringify({{pass, type}}));
+      alert("Usuario registrado");
+    }}
+
+    function login() {{
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const data = JSON.parse(localStorage.getItem("user_" + user));
+      if (data && data.pass === pass) {{
+        currentUserType = data.type;
+        alert("Bienvenido " + user + " (" + data.type + ")");
+        if (data.type === "admin") {{
+          document.getElementById("adminBtn").classList.remove("d-none");
+        }}
+        renderProducts();
+      }} else {{
+        alert("Login fallido");
+      }}
+    }}
+
+    function toggleAdminPanel() {{
+      const panel = document.getElementById("adminPanel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    }}
+
+    function addProduct() {{
+      const name = document.getElementById("newName").value;
+      const priceRetail = parseFloat(document.getElementById("newPriceRetail").value);
+      const priceWholesale = parseFloat(document.getElementById("newPriceWholesale").value);
+      const image = document.getElementById("newImage").value;
+      products.push({{
+        id: products.length + 1,
+        name,
+        price_retail: priceRetail,
+        price_wholesale: priceWholesale,
+        image
+      }});
+      renderProducts();
+      alert("Producto agregado");
+    }}
+
+    // Productos de ejemplo
+    products = [
+      {{
+        id: 1,
+        name: "Cargador Karsen USB + USB-C 25W",
+        price_retail: 3500,
+        price_wholesale: 3000,
+        image: "images/cargador-karsen.jpg"
+      }},
+      {{
+        id: 2,
+        name: "Cable Lightning a USB (2m)",
+        price_retail: 2500,
+        price_wholesale: 2100,
+        image: "images/cable-lightning.jpg"
+      }}
+    ];
+
+    renderProducts();
+  </script>
+</body>
+</html>
