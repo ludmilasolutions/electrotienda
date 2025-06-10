@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "name": "Cargador Karsen USB + USB-C 25W",
+    "price_retail": 3500,
+    "price_wholesale": 3000,
+    "image": "images/cargador-karsen.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Cable Lightning a USB (2m)",
+    "price_retail": 2500,
+    "price_wholesale": 2100,
+    "image": "images/cable-lightning.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Cable USB-C a Lightning (1m)",
+    "price_retail": 2400,
+    "price_wholesale": 2000,
+    "image": "images/cable-usbc-lightning.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Cable USB-C (1m)",
+    "price_retail": 2200,
+    "price_wholesale": 1900,
+    "image": "images/cable-usbc.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Cable USB-C Reforzado (1m)",
+    "price_retail": 2250,
+    "price_wholesale": 1950,
+    "image": "images/cable-usbc-2.jpg"
+  },
+  {
+    "id": 6,
+    "name": "Cable de Datos Karsen Tipo C / Micro USB",
+    "price_retail": 1800,
+    "price_wholesale": 1500,
+    "image": "images/cables-karsen.jpg"
+  },
+  {
+    "id": 7,
+    "name": "Cargadores Dobles Karsen 3.1A",
+    "price_retail": 2800,
+    "price_wholesale": 2400,
+    "image": "images/cargadores-karsen.jpg"
+  },
+  {
+    "id": 8,
+    "name": "Soporte para Celular MOVE",
+    "price_retail": 3200,
+    "price_wholesale": 2700,
+    "image": "images/soporte-move.jpg"
+  },
+  {
+    "id": 9,
+    "name": "Cargador Ultra R\u00e1pido Karsen 25W",
+    "price_retail": 3600,
+    "price_wholesale": 3100,
+    "image": "images/cargador-25w.jpg"
+  }
+]
