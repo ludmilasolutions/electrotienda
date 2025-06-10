@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda Electrónica</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #ffffff;
+    }
+    .sidebar {
+      height: 100vh;
+      background: #f8f9fa;
+      padding: 1rem;
+    }
+    .sidebar.dark-mode {
+      background: #1f1f1f;
+    }
+    .product-card {
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+    .product-card:hover {
+      transform: scale(1.02);
+    }
+    .product-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .cart {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 999;
+    }
+    .footer {
+      background: #333;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="d-flex">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+      <h4>Categorías</h4>
+      <ul class="nav flex-column">
+        <li class="nav-item"><a href="#" class="nav-link">Auriculares</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Cargadores</a></li>
+        <li class="nav-item"><a href="#" class="nav-link">Fundas</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <h1>Tienda Electrónica</h1>
+        <div>
+          <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+          <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">
+            <i class="fa fa-moon"></i>
+          </button>
+          <button class="btn btn-outline-primary" onclick="toggleCart()">
+            <i class="fa fa-shopping-cart"></i>
+            <span id="cart-count" class="badge bg-danger">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="my-3">
+        <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos..." onkeyup="filterProducts()">
+      </div>
+
+      <!-- Products -->
+      <div class="row" id="productContainer">
+        <!-- Productos cargados por JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart (modal style) -->
+  <div class="cart bg-light p-3 border rounded d-none" id="cart">
+    <h5>Carrito</h5>
+    <ul id="cart-items" class="list-unstyled"></ul>
+    <p>Total: $<span id="cart-total">0</span></p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p>Seguinos en:
+      <a href="#" class="text-white"><i class="fab fa-facebook mx-2"></i></a>
+      <a href="#" class="text-white"><i class="fab fa-instagram mx-2"></i></a>
+      <a href="#" class="text-white"><i class="fab fa-whatsapp mx-2"></i></a>
+    </p>
+    <p>Métodos de pago: Visa, Mastercard, MercadoPago</p>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content p-3">
+        <h5>Usuario</h5>
+        <input id="username" class="form-control mb-2" placeholder="Usuario">
+        <input id="password" type="password" class="form-control mb-2" placeholder="Contraseña">
+        <select id="userType" class="form-control mb-2">
+          <option value="retail">Cliente Minorista</option>
+          <option value="wholesale">Cliente Mayorista</option>
+        </select>
+        <div class="d-flex justify-content-between">
+          <button class="btn btn-primary" onclick="login()">Login</button>
+          <button class="btn btn-secondary" onclick="register()">Registrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let products = [];
+    let cart = [];
+    let currentUserType = "retail";
+
+    function loadProducts() {
+      fetch("productos.json")
+        .then(res => res.json())
+        .then(data => {
+          products = data;
+          renderProducts();
+        });
+    }
+
+    function renderProducts() {
+      const container = document.getElementById("productContainer");
+      container.innerHTML = "";
+      products.forEach(p => {
+        const price = currentUserType === "wholesale" ? p.price_wholesale : p.price_retail;
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-3";
+        col.innerHTML = `
+          <div class="product-card">
+            <img src="${p.image}" alt="${p.name}">
+            <h5>${p.name}</h5>
+            <p>$${price}</p>
+            <button class="btn btn-sm btn-success" onclick='addToCart(${p.id})'>Agregar</button>
+          </div>`;
+        container.appendChild(col);
+      });
+    }
+
+    function addToCart(id) {
+      const prod = products.find(p => p.id === id);
+      const price = currentUserType === "wholesale" ? prod.price_wholesale : prod.price_retail;
+      cart.push({ name: prod.name, price });
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartItems = document.getElementById("cart-items");
+      const cartCount = document.getElementById("cart-count");
+      const cartTotal = document.getElementById("cart-total");
+
+      cartItems.innerHTML = "";
+      let total = 0;
+      cart.forEach((item, index) => {
+        total += item.price;
+        const li = document.createElement("li");
+        li.innerHTML = `${item.name} - $${item.price} <button onclick='removeFromCart(${index})'>x</button>`;
+        cartItems.appendChild(li);
+      });
+
+      cartCount.textContent = cart.length;
+      cartTotal.textContent = total;
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCart();
+    }
+
+    function toggleCart() {
+      document.getElementById("cart").classList.toggle("d-none");
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+      document.getElementById("sidebar").classList.toggle("dark-mode");
+    }
+
+    function filterProducts() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(query));
+      const container = document.getElementById("productContainer");
+      container.innerHTML = "";
+      filtered.forEach(p => {
+        const price = currentUserType === "wholesale" ? p.price_wholesale : p.price_retail;
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-3";
+        col.innerHTML = `
+          <div class="product-card">
+            <img src="${p.image}" alt="${p.name}">
+            <h5>${p.name}</h5>
+            <p>$${price}</p>
+            <button class="btn btn-sm btn-success" onclick='addToCart(${p.id})'>Agregar</button>
+          </div>`;
+        container.appendChild(col);
+      });
+    }
+
+    function register() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const type = document.getElementById("userType").value;
+      localStorage.setItem("user_" + user, JSON.stringify({pass, type}));
+      alert("Registrado correctamente.");
+    }
+
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const data = JSON.parse(localStorage.getItem("user_" + user));
+      if (data && data.pass === pass) {
+        currentUserType = data.type;
+        alert("Bienvenido " + user + " (" + data.type + ")");
+        renderProducts();
+      } else {
+        alert("Usuario o contraseña incorrectos.");
+      }
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>
