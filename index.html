@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,108 +8,49 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body.dark-mode {
-      background-color: #121212;
-      color: #ffffff;
-    }
-    .sidebar {
-      height: 100vh;
-      background: #f8f9fa;
-      padding: 1rem;
-    }
-    .sidebar.dark-mode {
-      background: #1f1f1f;
-    }
+    body { background-color: #f8f9fa; }
     .product-card {
       border: 1px solid #ddd;
-      padding: 1rem;
       border-radius: 8px;
-      transition: transform 0.2s;
-    }
-    .product-card:hover {
-      transform: scale(1.02);
+      padding: 1rem;
+      text-align: center;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
     .product-card img {
       width: 100%;
-      height: 200px;
+      height: 180px;
       object-fit: cover;
       border-radius: 5px;
+      margin-bottom: 10px;
     }
-    .cart {
+    .admin-panel {
+      display: none;
       position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 999;
-    }
-    .footer {
-      background: #333;
-      color: white;
-      text-align: center;
-      padding: 1rem;
-      position: fixed;
-      width: 100%;
-      bottom: 0;
+      top: 80px;
+      right: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      z-index: 1000;
+      width: 300px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <div id="sidebar" class="sidebar">
-      <h4>Categorías</h4>
-      <ul class="nav flex-column">
-        <li class="nav-item"><a href="#" class="nav-link">Auriculares</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Cargadores</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Fundas</a></li>
-      </ul>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container-fluid">
-      <div class="d-flex justify-content-between align-items-center mt-3">
-        <h1>Tienda Electrónica</h1>
-        <div>
-          <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
-          <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">
-            <i class="fa fa-moon"></i>
-          </button>
-          <button class="btn btn-outline-primary" onclick="toggleCart()">
-            <i class="fa fa-shopping-cart"></i>
-            <span id="cart-count" class="badge bg-danger">0</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Search -->
-      <div class="my-3">
-        <input type="text" class="form-control" id="searchInput" placeholder="Buscar productos..." onkeyup="filterProducts()">
-      </div>
-
-      <!-- Products -->
-      <div class="row" id="productContainer">
-        <!-- Productos cargados por JS -->
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="text-primary">Tienda Electrónica</h2>
+      <div>
+        <button class="btn btn-outline-dark me-2" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+        <button class="btn btn-outline-success d-none" id="adminBtn" onclick="toggleAdminPanel()">Admin</button>
       </div>
     </div>
+    <div class="row" id="productContainer"></div>
   </div>
 
-  <!-- Cart (modal style) -->
-  <div class="cart bg-light p-3 border rounded d-none" id="cart">
-    <h5>Carrito</h5>
-    <ul id="cart-items" class="list-unstyled"></ul>
-    <p>Total: $<span id="cart-total">0</span></p>
-  </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <p>Seguinos en:
-      <a href="#" class="text-white"><i class="fab fa-facebook mx-2"></i></a>
-      <a href="#" class="text-white"><i class="fab fa-instagram mx-2"></i></a>
-      <a href="#" class="text-white"><i class="fab fa-whatsapp mx-2"></i></a>
-    </p>
-    <p>Métodos de pago: Visa, Mastercard, MercadoPago</p>
-  </div>
-
-  <!-- Login Modal -->
+  <!-- Modal Login -->
   <div class="modal fade" id="loginModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content p-3">
@@ -118,6 +60,7 @@
         <select id="userType" class="form-control mb-2">
           <option value="retail">Cliente Minorista</option>
           <option value="wholesale">Cliente Mayorista</option>
+          <option value="admin">Administrador</option>
         </select>
         <div class="d-flex justify-content-between">
           <button class="btn btn-primary" onclick="login()">Login</button>
@@ -127,94 +70,50 @@
     </div>
   </div>
 
+  <!-- Panel Admin -->
+  <div class="admin-panel" id="adminPanel">
+    <h5 class="mb-3">Agregar Producto</h5>
+    <input id="newName" class="form-control mb-2" placeholder="Nombre del producto">
+    <input id="newPriceRetail" type="number" class="form-control mb-2" placeholder="Precio Minorista">
+    <input id="newPriceWholesale" type="number" class="form-control mb-2" placeholder="Precio Mayorista">
+    <input id="newImage" class="form-control mb-2" placeholder="Ruta de imagen (images/ejemplo.jpg)">
+    <button class="btn btn-success w-100" onclick="addProduct()">Agregar</button>
+  </div>
+
   <script>
     let products = [];
-    let cart = [];
     let currentUserType = "retail";
 
-    function loadProducts() {
-      fetch("productos.json")
-        .then(res => res.json())
-        .then(data => {
-          products = data;
-          renderProducts();
-        });
-    }
+    const initialProducts = [
+      {
+        id: 1,
+        name: "Cargador Karsen USB + USB-C 25W",
+        price_retail: 3500,
+        price_wholesale: 3000,
+        image: "images/cargador-karsen.jpg"
+      },
+      {
+        id: 2,
+        name: "Cable Lightning a USB (2m)",
+        price_retail: 2500,
+        price_wholesale: 2100,
+        image: "images/cable-lightning.jpg"
+      }
+    ];
 
     function renderProducts() {
       const container = document.getElementById("productContainer");
       container.innerHTML = "";
-      products.forEach(p => {
+      products.forEach((p) => {
         const price = currentUserType === "wholesale" ? p.price_wholesale : p.price_retail;
-        const col = document.createElement("div");
-        col.className = "col-md-4 mb-3";
-        col.innerHTML = `
-          <div class="product-card">
-            <img src="${p.image}" alt="${p.name}">
-            <h5>${p.name}</h5>
-            <p>$${price}</p>
-            <button class="btn btn-sm btn-success" onclick='addToCart(${p.id})'>Agregar</button>
+        container.innerHTML += `
+          <div class="col-md-4 mb-4">
+            <div class="product-card">
+              <img src="${p.image}" alt="${p.name}">
+              <h5>${p.name}</h5>
+              <p class="text-primary fw-bold">$${price}</p>
+            </div>
           </div>`;
-        container.appendChild(col);
-      });
-    }
-
-    function addToCart(id) {
-      const prod = products.find(p => p.id === id);
-      const price = currentUserType === "wholesale" ? prod.price_wholesale : prod.price_retail;
-      cart.push({ name: prod.name, price });
-      updateCart();
-    }
-
-    function updateCart() {
-      const cartItems = document.getElementById("cart-items");
-      const cartCount = document.getElementById("cart-count");
-      const cartTotal = document.getElementById("cart-total");
-
-      cartItems.innerHTML = "";
-      let total = 0;
-      cart.forEach((item, index) => {
-        total += item.price;
-        const li = document.createElement("li");
-        li.innerHTML = `${item.name} - $${item.price} <button onclick='removeFromCart(${index})'>x</button>`;
-        cartItems.appendChild(li);
-      });
-
-      cartCount.textContent = cart.length;
-      cartTotal.textContent = total;
-    }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      updateCart();
-    }
-
-    function toggleCart() {
-      document.getElementById("cart").classList.toggle("d-none");
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-      document.getElementById("sidebar").classList.toggle("dark-mode");
-    }
-
-    function filterProducts() {
-      const query = document.getElementById("searchInput").value.toLowerCase();
-      const filtered = products.filter(p => p.name.toLowerCase().includes(query));
-      const container = document.getElementById("productContainer");
-      container.innerHTML = "";
-      filtered.forEach(p => {
-        const price = currentUserType === "wholesale" ? p.price_wholesale : p.price_retail;
-        const col = document.createElement("div");
-        col.className = "col-md-4 mb-3";
-        col.innerHTML = `
-          <div class="product-card">
-            <img src="${p.image}" alt="${p.name}">
-            <h5>${p.name}</h5>
-            <p>$${price}</p>
-            <button class="btn btn-sm btn-success" onclick='addToCart(${p.id})'>Agregar</button>
-          </div>`;
-        container.appendChild(col);
       });
     }
 
@@ -222,24 +121,80 @@
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
       const type = document.getElementById("userType").value;
-      localStorage.setItem("user_" + user, JSON.stringify({pass, type}));
-      alert("Registrado correctamente.");
+      if (!user || !pass) return alert("Completa usuario y contraseña");
+      localStorage.setItem("user_" + user, JSON.stringify({ pass, type }));
+      alert("Registrado correctamente");
     }
 
     function login() {
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
       const data = JSON.parse(localStorage.getItem("user_" + user));
-      if (data && data.pass === pass) {
-        currentUserType = data.type;
-        alert("Bienvenido " + user + " (" + data.type + ")");
-        renderProducts();
-      } else {
-        alert("Usuario o contraseña incorrectos.");
+      if (!data || data.pass !== pass) {
+        return alert("Credenciales incorrectas");
       }
+      currentUserType = data.type;
+      localStorage.setItem("loggedUser", JSON.stringify({ user, type: data.type }));
+      alert("Bienvenido " + user + " (" + data.type + ")");
+      if (data.type === "admin") {
+        document.getElementById("adminBtn").classList.remove("d-none");
+      }
+      renderProducts();
+      document.getElementById("loginModal").classList.remove("show");
+      document.body.classList.remove("modal-open");
+      document.querySelector(".modal-backdrop")?.remove();
+    }
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const data = JSON.parse(localStorage.getItem("user_" + user));
+      if (!data || data.pass !== pass) return alert("Credenciales incorrectas");
+      currentUserType = data.type;
+      alert("Bienvenido " + user + " (" + data.type + ")");
+      if (data.type === "admin") {
+        document.getElementById("adminBtn").classList.remove("d-none");
+      }
+      renderProducts();
     }
 
-    loadProducts();
+    function toggleAdminPanel() {
+      const panel = document.getElementById("adminPanel");
+      panel.style.display = panel.style.display === "block" ? "none" : "block";
+    }
+
+    function addProduct() {
+      const name = document.getElementById("newName").value;
+      const priceRetail = parseFloat(document.getElementById("newPriceRetail").value);
+      const priceWholesale = parseFloat(document.getElementById("newPriceWholesale").value);
+      const image = document.getElementById("newImage").value;
+      if (!name || !image || isNaN(priceRetail) || isNaN(priceWholesale)) {
+        return alert("Completa todos los campos correctamente");
+      }
+      products.push({
+        id: products.length + 1,
+        name,
+        price_retail: priceRetail,
+        price_wholesale: priceWholesale,
+        image
+      });
+      renderProducts();
+      alert("Producto agregado");
+    }
+
+    // Revisar si hay sesión guardada
+    const logged = JSON.parse(localStorage.getItem("loggedUser"));
+    if (logged) {
+      currentUserType = logged.type;
+      alert("Sesión restaurada: " + logged.user + " (" + logged.type + ")");
+      if (logged.type === "admin") {
+        document.getElementById("adminBtn").classList.remove("d-none");
+      }
+    }
+    localStorage.setItem("user_admin", JSON.stringify({ pass: "1234", type: "admin" }));
+
+    products = initialProducts;
+    renderProducts();
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
