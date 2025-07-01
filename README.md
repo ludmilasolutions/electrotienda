@@ -1,11 +1,7 @@
-# ElectroShop
-
-Tienda de electrónica + backend de pagos Mercado Pago.
-
-## Instalación local (backend)
+## Instalación local (back-end)
 
 ```bash
 cd backend
-cp .env.example .env   # poner tu token real
+cp .env.example .env   # pon tu token real
 npm install
 npm start
