@@ -1,0 +1,16 @@
+[
+  {
+    "id": 501,
+    "name": "Smartwatch Fit Pro X",
+    "description": "Monitor cardíaco • GPS • Sumergible 5 ATM",
+    "price": 35999,
+    "image": "https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "id": 502,
+    "name": "Reloj Inteligente Fashion S",
+    "description": "Pantalla AMOLED • Llamadas Bluetooth",
+    "price": 28999,
+    "image": "https://images.unsplash.com/photo-1580906855281-74c7dedf017b?auto=format&fit=crop&w=600&q=80"
+  }
+]
