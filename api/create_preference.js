@@ -1,32 +1,30 @@
-// api/create_preference.js  ── ES Modules on Vercel
-import mercadopago from "mercadopago";
+// api/create_preference.js  –  ES Modules en Vercel
+import Mercadopago from "mercadopago";
 
-mercadopago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN
+const mp = new Mercadopago({
+  accessToken: process.env.MP_ACCESS_TOKEN    //  ← tu access-token de prueba o prod
 });
 
+// Solo POST
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+  if (req.method !== "POST")
     return res.status(405).json({ error: "Método no permitido" });
-  }
 
   try {
     const { items = [], payer_email = "" } = req.body;
-
-    // Validación mínima
     if (!items.length) {
       return res.status(400).json({ error: "Items vacíos" });
     }
 
-    // Normalizamos a Number
-    const normItems = items.map(it => ({
+    // normalizo a número por si vienen como string
+    const clean = items.map(it => ({
       ...it,
       unit_price: Number(it.unit_price),
       quantity:   Number(it.quantity)
     }));
 
-    const preference = await mercadopago.preferences.create({
-      items: normItems,
+    const pref = await mp.preferences.create({
+      items: clean,
       payer: { email: payer_email },
       back_urls: {
         success: `${process.env.BASE_URL}/success.html`,
@@ -36,11 +34,12 @@ export default async function handler(req, res) {
       auto_return: "approved"
     });
 
-    return res.status(200).json({ init_point: preference.body.init_point });
+    return res.status(200).json({ init_point: pref.init_point });
   } catch (err) {
     console.error("MP-error", err);
     return res.status(500).json({ error: "No se pudo crear la preferencia" });
   }
 }
+
 
 
