@@ -1,0 +1,23 @@
+[
+  {
+    "id": 301,
+    "name": "Funda Silicona iPhone 14",
+    "description": "Soft-touch • Protección 360° • Azul medianoche",
+    "price": 5999,
+    "image": "https://images.unsplash.com/photo-1603891614819-4fc56336f4fa?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "id": 302,
+    "name": "Case Antigolpes Samsung A54",
+    "description": "Bordes reforzados • Transparente",
+    "price": 5499,
+    "image": "https://images.unsplash.com/photo-1512499617640-c2f999098c30?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "id": 303,
+    "name": "Funda Cuero Eco Flip Xiaomi Redmi Note 13",
+    "description": "Tarjetero interno • Cierre magnético",
+    "price": 6999,
+    "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80"
+  }
+]
