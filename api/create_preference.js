@@ -1,5 +1,7 @@
-// api/create_preference.js
+export const config = { runtime: "nodejs" };   // fuerza runtime Node
 import mercadopago from "mercadopago";
+mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN });
+
 
 // ── SDK v2: se instancia la clase ──────────────────────────────────────────────
 const mp = new mercadopago.MercadoPago({
