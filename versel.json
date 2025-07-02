@@ -1,8 +1,6 @@
 {
-  "ignore": ["docs/**"]
-  "functions": {
-    "api/**.js": {
-      "runtime": "nodejs18.x"
-    }
+  "type": "module",
+  "dependencies": {
+    "mercadopago": "1.5.14"   // 🔒 fijamos la versión antigua
   }
 }
