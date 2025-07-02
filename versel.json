@@ -1,6 +1,5 @@
 {
   "type": "module",
   "dependencies": {
-    "mercadopago": "1.5.14"   // 🔒 fijamos la versión antigua
-  }
+    "mercadopago": "1.5.14" 
 }
