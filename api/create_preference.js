@@ -18,7 +18,9 @@ export default async function handler(req, res) {
         ? it.picture_url
         : `${BASE}/${it.picture_url}`                 // ej. https://…/images/…
     }));
-
+    const baseURL = process.env.BASE_URL   // ← producción
+             || `https://${req.headers.host}`; // ← dev / fallback
+    
     const preferenceClient = new Preference(mp);
     const pref = await preferenceClient.create({
       items: fixedItems,
