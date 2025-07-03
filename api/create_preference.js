@@ -1,15 +1,14 @@
-// api/create_preference.js   (ESM)
+// api/create_preference.js  (ESM, mercadopago@1.5.14)
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
-const BASE = process.env.BASE_URL;
+const mp   = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+const BASE = process.env.BASE_URL;              // p. ej. https://electrotienda.vercel.app
 
-/* ───────────────  Handler  ─────────────── */
 export default async function handler(req, res) {
 
-  /* ----- CORS pre-flight (OPTIONS) ----- */
+  /* ------ CORS pre-flight ------ */
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin',  '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(200).end();
@@ -18,50 +17,52 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Método no permitido' });
 
-  /* ----- Garantizar que el body es un objeto ----- */
-  let bodyIn = req.body;
-  if (typeof bodyIn === 'string') {
-    try { bodyIn = JSON.parse(bodyIn); }
+  /* ------ Parsing seguro ------ */
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); }
     catch { return res.status(400).json({ error: 'JSON inválido' }); }
   }
 
-  const { items = [], payer_email = '' } = bodyIn;
+  const { items = [], payer_email = '' } = body;
 
-  /* ----- Normalizar picture_url y back_urls ----- */
+  /* ------ Normalizar items ------ */
   const fixedItems = items.map(it => ({
-    ...it,
-    picture_url: it.picture_url?.startsWith('http')
-      ? it.picture_url
-      : `${BASE}/${it.picture_url}`
+    title       : it.title,
+    quantity    : Number(it.quantity)  || 1,
+    unit_price  : Number(it.unit_price),
+    picture_url : it.picture_url?.startsWith('http')
+                   ? it.picture_url
+                   : `${BASE}/${it.picture_url}`
   }));
 
-  const baseURL = BASE || `https://${req.headers.host}`;
-
+  /* ------ Crear preferencia ------ */
   try {
     const preferenceClient = new Preference(mp);
     const pref = await preferenceClient.create({
-      items: fixedItems,
-      payer: { email: payer_email },
-      back_urls: {
-        success: `${baseURL}/success.html`,
-        failure: `${baseURL}/error.html`,
-        pending: `${baseURL}/pending.html`
+      items       : fixedItems,
+      payer       : { email: payer_email },
+      currency_id : 'ARS',                          // <<<<<<  AQUÍ
+      back_urls   : {
+        success : `${BASE}/success.html`,
+        failure : `${BASE}/error.html`,
+        pending : `${BASE}/pending.html`
       },
-      auto_return: 'approved'
+      auto_return : 'approved'
     });
 
-    /* sandbox_init_point sólo existe en modo test */
-    const payURL = pref.sandbox_init_point || pref.init_point;
-
-    /* CORS header para el POST real */
     res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(200).json({ init_point: payURL });
+    return res.status(200).json({
+      init_point: pref.sandbox_init_point || pref.init_point
+    });
 
   } catch (err) {
     console.error('MP-error ►', err);
     return res.status(500).json({
-      error: 'No se pudo crear la preferencia',
-      detail: err.message ?? err
+      error : 'No se pudo crear la preferencia',
+      detail: err.message || err
     });
   }
 }
+
+
