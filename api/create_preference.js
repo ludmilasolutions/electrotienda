@@ -1,67 +1,74 @@
-// api/create_preference.js  (ESM – mercadopago@1.5.14)
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+// api/create_preference.js  (ES-modules)
+import { MercadoPagoConfig, Preference } from "mercadopago";
 
-const mp   = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
-const BASE = process.env.BASE_URL;                       // p.ej. https://electrotienda.vercel.app
+// ❶ Instanciamos el SDK v2
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
+// ❷ Función serverless (Vercel)
 export default async function handler(req, res) {
-  /* CORS pre-flight — opcional */
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin',  '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).end();
+  // Métodos permitidos
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Método no permitido" });
   }
 
-  if (req.method !== 'POST')
-    return res.status(405).json({ error: 'Método no permitido' });
+  // CORS muy laxo (ajustalo si hace falta)
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
-  /* Parse seguro */
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); }
-    catch { return res.status(400).json({ error: 'JSON inválido' }); }
+  /* —— Preparar datos —— */
+  // body puede venir como string cuando el front usa fetch()
+  let data = req.body;
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); }               // -> objeto
+    catch { return res.status(400).json({ error: "JSON inválido" }); }
   }
 
-  const { items = [], payer_email = '' } = body;
+  const { items = [], payer_email = "" } = data;
+  if (!Array.isArray(items) || !items.length) {
+    return res.status(400).json({ error: "items vacío" });
+  }
 
-  /* Normalizar items para MP-SDK v1.x */
-  const fixedItems = items.map(it => ({
-    title       : it.title,
-    currency_id : 'ARS',                                   // ← obligatorio
-    quantity    : Number(it.quantity)  || 1,
-    unit_price  : Number(it.unit_price) * 1.0,             // 1.0 => float
-    picture_url : it.picture_url?.startsWith('http')
-                   ? it.picture_url
-                   : `${BASE}/${it.picture_url}`
+  // URL base absoluta
+  const baseURL = process.env.BASE_URL || `https://${req.headers.host}`;
+
+  // Normalizar items al mínimo que acepta MP v2
+  const fixedItems = items.map(i => ({
+    title      : i.title?.toString()       ?? "Producto",
+    quantity   : Number(i.quantity)  || 1,
+    unit_price : Number(i.unit_price) || 0,
+    picture_url: i.picture_url?.startsWith("http")
+                   ? i.picture_url
+                   : `${baseURL}/${i.picture_url ?? ""}`
   }));
 
+  /* —— Crear preferencia —— */
   try {
     const preferenceClient = new Preference(mp);
+
     const pref = await preferenceClient.create({
-      items       : fixedItems,
-      payer       : { email: payer_email },
-      back_urls   : {
-        success : `${BASE}/success.html`,
-        failure : `${BASE}/error.html`,
-        pending : `${BASE}/pending.html`
+      items : fixedItems,
+      payer : { email: payer_email },
+      back_urls: {
+        success: `${baseURL}/success.html`,
+        failure: `${baseURL}/error.html`,
+        pending: `${baseURL}/pending.html`
       },
-      auto_return : 'approved'
+      auto_return: "approved"
     });
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.status(200).json({
-      init_point: pref.sandbox_init_point || pref.init_point
-    });
+    // sandbox_init_point (tests)  /  init_point (live)
+    const url = pref.sandbox_init_point || pref.init_point;
+    return res.status(200).json({ init_point: url });
 
   } catch (err) {
-    console.error('MP-error ►', err);
+    console.error("MP-error ►", err);
     return res.status(500).json({
-      error : 'No se pudo crear la preferencia',
-      detail: err.message || err
+      error : "No se pudo crear la preferencia",
+      detail: err?.message || err
     });
   }
 }
+
 
 
 
