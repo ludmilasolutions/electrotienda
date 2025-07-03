@@ -1,19 +1,15 @@
 // api/create_preference.js
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-// 1)  Configuración del SDK ---------------------------
-const mp = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN        // ← tu token real
-});
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
-// 2)  Handler serverless ------------------------------
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  /* ───── Parseo body (cuando Vercel lo pasa como string) ───── */
+  /* 1. Body seguro (string → objeto) */
   let data = req.body;
   if (typeof data === 'string') {
     try { data = JSON.parse(data); }
@@ -21,21 +17,19 @@ export default async function handler(req, res) {
   }
 
   const { items = [], payer_email = '' } = data;
-  if (!items.length) {
-    return res.status(400).json({ error: 'items vacío' });
-  }
+  if (!items.length) return res.status(400).json({ error: 'items vacío' });
 
-  /* ───── Compongo la preferencia ───── */
+  /* 2. Construyo preferencia */
   const base = process.env.BASE_URL || `https://${req.headers.host}`;
   const prefBody = {
     items: items.map(it => ({
-      title       : String(it.title   ?? 'Producto'),
-      quantity    : Number(it.quantity?? 1),
-      unit_price  : Number(it.unit_price ?? 0),
+      title       : String(it.title        ?? 'Producto'),
+      quantity    : Number(it.quantity     ?? 1),
+      unit_price  : Number(it.unit_price   ?? 0),
       currency_id : 'ARS',
-      picture_url : it.picture_url?.startsWith('http')
-                     ? it.picture_url
-                     : `${base}/${it.picture_url || ''}`
+      picture_url : (it.picture_url ?? '').startsWith('http')
+                      ? it.picture_url
+                      : `${base}/${it.picture_url ?? ''}`
     })),
     payer: { email: payer_email },
     back_urls: {
@@ -46,21 +40,20 @@ export default async function handler(req, res) {
     auto_return: 'approved'
   };
 
+  /* 3. 💡 LOG para depurar */
+  console.log('Payload enviado a Mercado Pago ⇒\n', JSON.stringify(prefBody, null, 2));
+
   try {
-    /* Cliente de preferencias (forma oficial v2) */
+    /* SDK v2 */
     const prefClient = new Preference(mp);
     const pref       = await prefClient.create({ body: prefBody });
 
+    /* sandbox_init_point durante tests ⚠️ */
     const url = pref.sandbox_init_point || pref.init_point;
     return res.status(200).json({ init_point: url });
   } catch (err) {
     console.error('MP-error ►', err);
-    return res.status(500).json({
-      error : 'No se pudo crear la preferencia',
-      detail: err?.message ?? err
-    });
+    return res.status(500).json({ error: 'No se pudo crear la preferencia', detail: err.message });
   }
 }
-
-
 
