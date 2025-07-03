@@ -1,38 +1,37 @@
-// api/create_preference.js
-import mercadopago from "mercadopago";   // 👈  minúsculas, default-import
+// api/create_preference.js  –  función serverless ESM
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-// 2.x → el constructor vive en mercadopago.MercadoPago
-const mp = new mercadopago.MercadoPago({
-  accessToken: process.env.MP_ACCESS_TOKEN,
-});
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
 
-// ───── función serverless ────────────────────────────────────────────────
+// Vercel handler
 export default async function handler(req, res) {
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Método no permitido" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método no permitido' });
+  }
 
   try {
-    const { items = [], payer_email = "" } = req.body;
+    const { items = [], payer_email } = req.body ?? {};
 
-    const pref = await mp.preferences.create({
-      items: items.map(it => ({
-        ...it,
-        unit_price: Number(it.unit_price),
-        quantity:   Number(it.quantity),
-      })),
+    // Construir preferencia
+    const preferenceClient = new Preference(mp);
+    const pref = await preferenceClient.create({
+      items,
       payer: { email: payer_email },
       back_urls: {
         success: `${process.env.BASE_URL}/success.html`,
         failure: `${process.env.BASE_URL}/error.html`,
-        pending: `${process.env.BASE_URL}/pending.html`,
+        pending: `${process.env.BASE_URL}/pending.html`
       },
-      auto_return: "approved",
+      auto_return: 'approved'
     });
 
-    return res.status(200).json({ init_point: pref.init_point });
+    // En v2 la URL de pago está en pref.sandbox_init_point (test)
+    const init_point = pref.sandbox_init_point || pref.init_point;
+    return res.status(200).json({ init_point });
   } catch (err) {
-    console.error("MP-error ►", err);
-    return res.status(500).json({ error: "No se pudo crear la preferencia" });
+    console.error('MP-error', err);
+    return res.status(500).json({ error: 'No se pudo crear la preferencia', detail: err.message });
   }
 }
+
 
