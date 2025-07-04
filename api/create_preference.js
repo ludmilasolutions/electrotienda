@@ -1,83 +1,71 @@
-// api/create_preference.js
+// /api/create_preference.js   (ESM + SDK v2)
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-/* ╔═══════════════  CONFIG  ═══════════════╗ */
+/* 1️⃣  Configurar SDK */
 const mp = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN        // ← token de PRODUCCIÓN
+  accessToken: process.env.MP_ACCESS_TOKEN        // <- ACCESS_TOKEN real
 });
 
-const ALLOWED_ORIGIN = process.env.ALLOW_ORIGIN  ?? '*';    // CORS
-const USE_SANDBOX    = process.env.USE_SANDBOX   === 'true'; // fuerza sandbox
+const ALLOWED_ORIGIN = process.env.ALLOW_ORIGIN || '*';   // CORS
 
-/* ╔═══════════════  HANDLER  ═══════════════╗ */
-async function handler (req, res) {
-
-  /* ────────  CORS  ──────── */
-  res.setHeader('Access-Control-Allow-Origin',  ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+/* 2️⃣  Función serverless */
+export default async function handler(req, res) {
+  /* ----- CORS ----- */
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();   // pre-flight OK
 
-  /* ────────  Sólo POST  ──────── */
+  // pre-flight
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  /* ----- sólo POST ----- */
   if (req.method !== 'POST') {
-    res.setHeader('Allow','POST');
-    return res.status(405).json({ error:'Método no permitido' });
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  /* ────────  Body  ──────── */
-  let data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  /* ----- body ----- */
+  let data = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
   const { items = [], payer_email = '' } = data;
   if (!Array.isArray(items) || !items.length)
-    return res.status(400).json({ error:'items vacío' });
+    return res.status(400).json({ error: 'items vacío' });
 
-  /* ────────  Preferencia  ──────── */
   const BASE = process.env.BASE_URL || `https://${req.headers.host}`;
-  const fixedItems = items.map(i => ({
-    title       : i.title      ?? 'Producto',
-    quantity    : +i.quantity  || 1,
-    unit_price  : +i.unit_price|| 0,
-    currency_id : i.currency_id|| 'ARS',
-    picture_url : i.picture_url?.startsWith('http')
-                  ? i.picture_url
-                  : `${BASE}/${i.picture_url || ''}`
-  }));
 
+  /* ----- crear preferencia ----- */
   try {
     const prefClient = new Preference(mp);
-    const pref       = await prefClient.create({
+    const pref = await prefClient.create({
       body: {
-        items : fixedItems,
-        payer : { email:payer_email },
-        back_urls : {
-          success : `${BASE}/success.html`,
-          failure : `${BASE}/error.html`,
-          pending : `${BASE}/pending.html`
+        items: items.map(it => ({
+          title       : String(it.title ?? 'Producto'),
+          quantity    : Number(it.quantity ?? 1),
+          unit_price  : Number(it.unit_price ?? 0),
+          currency_id : it.currency_id || 'ARS',
+          picture_url : it.picture_url?.startsWith('http')
+                        ? it.picture_url
+                        : `${BASE}/${it.picture_url || ''}`
+        })),
+        payer: { email: payer_email },
+        back_urls: {
+          success: `${BASE}/success.html`,
+          failure: `${BASE}/error.html`,
+          pending: `${BASE}/pending.html`
         },
-        auto_return : 'approved'
+        auto_return: 'approved'
       }
     });
 
-    const init_point = USE_SANDBOX
-      ? pref.sandbox_init_point
-      : (pref.init_point ?? pref.sandbox_init_point);
-
-    return res.status(200).json({ init_point });
+    const url = pref.sandbox_init_point || pref.init_point; // test o prod
+    return res.status(200).json({ init_point: url });
 
   } catch (err) {
     console.error('MP-error ►', err);
     return res.status(500).json({
       error : 'No se pudo crear la preferencia',
-      detail: err?.message || String(err)
+      detail: err?.message || err
     });
   }
 }
-
-/* ══════════════  EXPORT  ══════════════ */
-export default handler;
-
-
-  return res.status(200).json({ init_point: pref.sandbox_init_point || pref.init_point });
-}
-
 
 
