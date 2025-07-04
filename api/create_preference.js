@@ -1,73 +1,58 @@
 // api/create_preference.js
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-/* 1)  CONFIGURAR SDK -------------------------------------------------- */
-const mp = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN   //  ►  tu ACCESS_TOKEN real
-});
+/* 1)  SDK -------------------------------------------------------------- */
+const mp = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN });
+const ALLOWED_ORIGIN = process.env.ALLOW_ORIGIN || '*';   // ej. https://ludmilasolutions.github.io
 
-/* 2)  HANDLER SERVERLESS --------------------------------------------- */
+/* 2)  Handler ---------------------------------------------------------- */
 export default async function handler(req, res) {
+  /* ────────  CORS  ──────── */
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  /* ───────────────── Validar método ───────────────── */
+  // Pre-flight
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  /* ────────  Sólo POST  ──────── */
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  /* ───────────────── Parsear body ─────────────────── */
-  let data = req.body;
-  if (typeof data === 'string') {
-    try { data = JSON.parse(data); }
-    catch { return res.status(400).json({ error: 'JSON inválido' }); }
-  }
-
+  /* ────────  Parseo body  ──────── */
+  let data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   const { items = [], payer_email = '' } = data;
-  if (!Array.isArray(items) || !items.length) {
-    return res.status(400).json({ error: 'items vacío' });
-  }
+  if (!items.length) return res.status(400).json({ error: 'items vacío' });
 
-  /* ───────────────── Armar preferencia ───────────── */
-  const BASE = process.env.BASE_URL || `https://${req.headers.host}`;   // ej. https://tudominio.vercel.app
+  /* ────────  Preferencia  ──────── */
+  const BASE = process.env.BASE_URL || `https://${req.headers.host}`;
+  const prefClient = new Preference(mp);
 
-  // Normalizamos los ítems
-  const fixedItems = items.map(it => ({
-    title       : String(it.title ?? 'Producto'),
-    quantity    : Number(it.quantity ?? 1),
-    unit_price  : Number(it.unit_price ?? 0),
-    currency_id : it.currency_id || 'ARS',
-    picture_url : it.picture_url?.startsWith('http')
-                   ? it.picture_url
-                   : `${BASE}/${it.picture_url || ''}`
-  }));
+  const pref = await prefClient.create({
+    body: {
+      items: items.map(i => ({
+        title       : i.title ?? 'Producto',
+        quantity    : Number(i.quantity ?? 1),
+        unit_price  : Number(i.unit_price ?? 0),
+        currency_id : i.currency_id || 'ARS',
+        picture_url : i.picture_url?.startsWith('http')
+                      ? i.picture_url
+                      : `${BASE}/${i.picture_url || ''}`
+      })),
+      payer: { email: payer_email },
+      back_urls: {
+        success: `${BASE}/success.html`,
+        failure: `${BASE}/error.html`,
+        pending: `${BASE}/pending.html`
+      },
+      auto_return: 'approved'
+    }
+  });
 
-  const prefBody = {
-    items : fixedItems,
-    payer : { email: payer_email },
-    back_urls : {
-      success : `${BASE}/success.html`,
-      failure : `${BASE}/error.html`,
-      pending : `${BASE}/pending.html`
-    },
-    auto_return : 'approved'
-  };
-
-  try {
-    /* ───── Crear preferencia con SDK v2 ───── */
-    const prefClient = new Preference(mp);
-    const pref = await prefClient.create({ body: prefBody });
-
-    // En modo test usar sandbox_init_point, en prod init_point
-    const url = pref.sandbox_init_point || pref.init_point;
-    return res.status(200).json({ init_point: url });
-
-  } catch (err) {
-    console.error('MP-error ►', err);
-    return res.status(500).json({
-      error : 'No se pudo crear la preferencia',
-      detail: err?.message || err
-    });
-  }
+  return res.status(200).json({ init_point: pref.sandbox_init_point || pref.init_point });
 }
+
 
 
