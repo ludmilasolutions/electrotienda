@@ -59,7 +59,6 @@ export default async function handler (req, res) {
 
     /* ═══ Elegir URL de pago según entorno ═══ */
     const init_point = USE_SANDBOX
-      ? pref.sandbox_init_point          // fuerza sandbox
       : (pref.init_point ?? pref.sandbox_init_point); // producción > sandbox
 
     return res.status(200).json({ init_point });
