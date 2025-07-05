@@ -1,7 +1,7 @@
 [
 { "name": "Auriculares", "file": "auriculares.json" }
-{ "name": "Auriculares", "file": "cargadores.json" }
-{ "name": "Auriculares", "file": "fundas.json" }
-{ "name": "Auriculares", "file": "powerbanks.json" }
-{ "name": "Auriculares", "file": "smartwach.json" }
+{ "name": "Cargadores", "file": "cargadores.json" }
+{ "name": "Fundas", "file": "fundas.json" }
+{ "name": "PowerBanks", "file": "powerbanks.json" }
+{ "name": "SmartWach", "file": "smartwach.json" }
 ]
