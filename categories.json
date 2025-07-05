@@ -1,3 +1,7 @@
 [
 { "name": "Auriculares", "file": "auriculares.json" }
+{ "name": "Auriculares", "file": "cargadores.json" }
+{ "name": "Auriculares", "file": "fundas.json" }
+{ "name": "Auriculares", "file": "powerbanks.json" }
+{ "name": "Auriculares", "file": "smartwach.json" }
 ]
