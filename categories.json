@@ -3,5 +3,5 @@
 { "name": "Cargadores", "file": "cargadores.json" },
 { "name": "Fundas", "file": "fundas.json" },
 { "name": "PowerBanks", "file": "powerbanks.json" },
-{ "name": "SmartWach", "file": "smartwach.json" }
+{ "name": "SmartWatch", "file": "smartwatch.json" }
 ]
