@@ -4,34 +4,40 @@
     "name": "Auriculares Bluetooth XZ-10",
     "description": "Inalámbricos • 20 h de batería • Micrófono HD",
     "price": 1,
-    "image": "images/auriculares/producto-electronico-50.jpeg"
+    "image": "images/auriculares/producto-electronico-50.jpeg",
+    "category": "Auriculares"
   },
   {
     "id": 102,
     "name": "Headset Gamer RGB H-500",
     "description": "Sonido 7.1 • Iluminación RGB • Almohadillas XL",
     "price": 24999,
-    "image": "images/auriculares/producto-electronico-1.jpeg"
+    "image": "images/auriculares/producto-electronico-1.jpeg",
+    "category": "Auriculares"
   },
   {
     "id": 103,
     "name": "In-Ear Deportivos WS-30",
     "description": "Resistentes al agua IPX5 • Ganchos ergonómicos",
     "price": 8999,
-    "image": "images/auriculares/producto-electronico-6.jpeg"
+    "image": "images/auriculares/producto-electronico-6.jpeg",
+    "category": "Auriculares"
   },
   {
-    "id": 103,
-    "name": "In-Ear Deportivos WS-30",
+    "id": 104,
+    "name": "In-Ear Deportivos WS-30 (Rojo)",
     "description": "Resistentes al agua IPX5 • Ganchos ergonómicos",
     "price": 8999,
-    "image": "images/auriculares/producto-electronico-18.jpeg"
+    "image": "images/auriculares/producto-electronico-18.jpeg",
+    "category": "Auriculares"
   },
   {
-    "id": 103,
-    "name": "In-Ear Deportivos WS-30",
+    "id": 105,
+    "name": "In-Ear Deportivos WS-30 (Azul)",
     "description": "Resistentes al agua IPX5 • Ganchos ergonómicos",
     "price": 8999,
-    "image": "images/auriculares/producto-electronico-2.jpeg"
-  }  
+    "image": "images/auriculares/producto-electronico-2.jpeg",
+    "category": "Auriculares"
+  }
 ]
+
